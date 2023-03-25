@@ -1,0 +1,24 @@
+# This is a boot script for U-Boot
+# Generate boot.scr:
+# mkimage -c none -A arm -T script -d boot.cmd.default boot.scr
+#
+################
+fitimage_name=@@FIT_IMAGE@@
+kernel_name=@@KERNEL_IMAGE@@
+ramdisk_name=@@RAMDISK_IMAGE1@@
+rootfs_name=@@RAMDISK_IMAGE@@
+@@PRE_BOOTENV@@
+
+for boot_target in ${boot_targets};
+do
+	echo "Trying to load boot images from ${boot_target}"
+	if test "${boot_target}" = "jtag" ; then
+		@@KERNEL_BOOTCMD@@ @@KERNEL_LOAD_ADDRESS@@ @@RAMDISK_IMAGE_ADDRESS@@ @@DEVICETREE_ADDRESS@@
+	fi
+	if test "${boot_target}" = "xspi0" || test "${boot_target}" = "qspi" || test "${boot_target}" = "qspi0"; then
+		sf probe 0 0 0;
+		sf read 0x88000000 0x421000;
+		bootm 0x88000000;
+		echo "Booting using Fit image failed"
+	fi
+done
